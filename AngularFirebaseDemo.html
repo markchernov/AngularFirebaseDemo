@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en-US" ng-app='myApp'>
+
+<head>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <script src="https://cdn.firebase.com/js/client/2.3.2/firebase.js"></script>
+    <meta charset="utf-8" />
+    <title>Employees</title>
+</head>
+
+<body style='margin:20px' ng-controller='employeeCtrl'>
+
+    <script>
+        angular.module('myApp', []).controller('employeeCtrl', function($scope) {
+
+            // Assign back end to myData var on the Scope
+            $scope.myData = new Firebase('https://glaring-heat-6775.firebaseio.com/Employees');
+
+            $scope.employeeName = '';
+            $scope.employeeAge = null;
+            $scope.employees = {};
+
+            // Persist Employee on click to Firebase
+            $scope.saveEmployee = function() {
+
+                var employeeId = $scope.myData.push({
+                    employeeName: $scope.employeeName,
+                    employeeAge: $scope.employeeAge
+                });
+
+                console.log('This is return value of a PK in Firebase: ' + employeeId);
+
+                $scope.employeeName = '';
+                $scope.employeeAge = null;
+            };
+
+            // Event listener for changes in Firebase data model
+            $scope.myData.on('value', function(snapshot) {
+
+                $scope.employees = snapshot.val();
+
+            });
+
+        });
+
+    </script>
+
+
+
+
+
+    <div>
+
+        <label>Employee Name</label>
+        <input type='text' id='employeeName' ng-model='employeeName'>
+        <br>
+
+        <label>Employee Age</label>
+        <input type='text' id='employeeAge' ng-model='employeeAge'>
+        <br>
+
+
+    </div>
+
+    <div>
+
+        <button class='btn btn-default' ng-click='saveEmployee()'>
+            Save <span class='glyphicon glyphicon-ok'></span></button>
+
+    </div>
+
+    <br>
+
+    <div>
+        <table class='table table-bordered'>
+
+            <thead>
+                <th>Employee Name</th>
+                <th> Age</th>
+
+            </thead>
+            <tbody ng-repeat="employee in employees">
+
+                <tr>
+                    <td>{{employee.employeeName}}</td>
+                    <td>{{employee.employeeAge}}</td>
+                </tr>
+
+
+            </tbody>
+
+        </table>
+
+
+    </div>
+
+</body>
+
+</html>
