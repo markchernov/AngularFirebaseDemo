@@ -1,6 +1,14 @@
-angular.module('myApp', []).controller('employeeCtrl', function ($scope) {
+// create angular app with dependencies
+var app = angular.module('myApp', ["firebase"]);
+
+ /*******************************************************  
+    CONTROLLER FOR EMPLOYEES
+  ******************************************************* */
+
+app.controller('employeeCtrl', ["$scope","$rootScope", function ($scope,$rootScope) {
 
     // Assign back end to myData var on the Scope
+
     $scope.myData = new Firebase('https://glaring-heat-6775.firebaseio.com/Employees');
 
     $scope.employeeName = '';
@@ -30,10 +38,9 @@ angular.module('myApp', []).controller('employeeCtrl', function ($scope) {
         console.log('employee.employeeName  ');
         console.log(employeeName);
 
-        var currentEmployee = $scope.employees[employeeName];
-
+        /*var currentEmployee = $scope.employees[employeeName];
         console.log('This is employee choosen by employeeName: ');
-        console.log(currentEmployee);
+        console.log(currentEmployee);*/
 
         // Remove employee by the key at https://glaring-heat-6775.firebaseio.com/Employees/employeeName
         $scope.myData.child(employeeName).set(null);
@@ -41,6 +48,37 @@ angular.module('myApp', []).controller('employeeCtrl', function ($scope) {
         $scope.employeeAge = null;
     };
 
+    // Persist Employee on click to Firebase
+    $scope.updateEmployee = function (employee) {
+        
+        console.log('Inside updateEmployee() ');
+        console.log('This is choosen employee: ');
+        console.log(employee);
+
+        $scope.myData.child(employee.employeeName).update({
+            employeeAge: employee.employeeAge
+        });
+
+
+        $scope.employeeName = '';
+        $scope.employeeAge = null;
+    };
+    
+    // Choose current employee
+    $scope.chooseEmployee = function (employee) {
+        
+        console.log('Inside chooseEmployee() ');
+        console.log('This is choosen employee: ');
+        console.log(employee);
+        
+        $scope.employeeName = employee.employeeName;
+        $scope.employeeAge = employee.employeeAge;
+
+        $rootScope.employeeName = employee.employeeName;
+        $rootScope.employeeAge = employee.employeeAge;
+      
+    };
+    
 
     // Event listener for changes in Firebase data model
     $scope.myData.on('value', function (snapshot) {
@@ -53,4 +91,56 @@ angular.module('myApp', []).controller('employeeCtrl', function ($scope) {
 
     });
 
-});
+}]);
+
+
+
+/*******************************************************  
+    CONTROLLER FOR MESSAGES
+  ******************************************************* */
+
+
+
+
+// this factory returns a synchronized array of chat messages
+app.factory("chatMessages", ["$firebaseArray",
+  function($firebaseArray) {
+   
+    var ref = new Firebase('https://glaring-heat-6775.firebaseio.com/Messages/');
+
+    // this uses AngularFire to create the synchronized array
+    return $firebaseArray(ref);
+  }
+]);
+
+app.controller("ChatCtrl", ["$scope","$rootScope", "chatMessages", 
+  //  pass chatMessages factory into the controller
+  function($scope, $rootScope, chatMessages) {
+                       
+    // we add chatMessages array to the scope to be used in our ng-repeat
+    $scope.messages = chatMessages;
+
+    // a method to create new messages; called by ng-submit
+    $scope.addMessage = function() {
+      // calling $add on a synchronized array is like Array.push(),
+      // except that it saves the changes to our database!
+      $scope.messages.$add({
+        from: $rootScope.employeeName,
+        content: $scope.message
+      });
+
+      // reset the message input
+      $scope.message = "";
+    };
+
+    // if the messages are empty, add something for fun!
+    $scope.messages.$loaded(function() {
+      if ($scope.messages.length === 0) {
+        $scope.messages.$add({
+          from: "Firebase Docs",
+          content: "Hello world!"
+        });
+      }
+    });
+  }
+]);
